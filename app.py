@@ -182,8 +182,27 @@ PRODUCTS = [
         status=('Live', 'ok'),
         proof='About 5.2× lower cost on a sample 4-turn conversation. This measures one conversation, not an average across all traffic.',
     ),
+    dict(
+        id='jobs', bonus=True, nav='Job engine', title='Job engine: finding and judging the right roles',
+        result='One keyword searches the Israeli job boards and over 200 company career pages. Every role is read in full, matched to the profile and ranked, so the day starts with a short list instead of a hundred tabs.',
+        problem='Job boards repeat the same roles, and the real requirements sit in the text, not the title. A keyword search lets engineering roles in disguise through, and checking many sites by hand takes hours every day.',
+        solution='One keyword is sent to LinkedIn, Drushim, AllJobs, JobMaster and over 200 company career pages. Free rules remove what cannot fit before any paid call. Each remaining role is read in full by two independent Claude reviews, with a third when they disagree. The result is a 0 to 100 match, an eligibility check, a verdict and the CV to attach. The final click on every application is mine.',
+        steps=[('One keyword, many sources', 'A keyword is searched on LinkedIn, Drushim, AllJobs and JobMaster, and across over 200 company career pages built on Comeet, Greenhouse, Lever and Ashby. The Hebrew boards get the Hebrew term.'),
+               ('Free rules first', 'Title rules, excluded industries, a location rule and roles already applied to are removed before any paid call.'),
+               ('Read the full post', 'The whole description is read, not just the title. Required languages, degrees, years and domains all live in the text.'),
+               ('Two independent reviews', 'Two separate Claude reviews list every stated requirement as must or nice, with a quote as evidence. If their scores differ by more than 10 points, a third review decides.'),
+               ('Match, eligibility, verdict', 'A 0 to 100 match, an eligibility check, and a verdict: Apply now, Apply, Maybe or Skip. A role scoring under 40 is never shown.'),
+               ('Short list with the right CV', 'Roles are sorted by match, each with a one-line reason and the CV to attach. A role I applied to or removed does not come back.')],
+        rules=[('Free before paid', 'the career pages and Drushim are read at no cost, and every rule that can stop a role runs before any Claude call.'),
+               ('Never applies by itself', 'the system finds, judges and prepares. The final click on every application is mine.'),
+               ('Outreach', 'a contact finder and an email verifier are built. Every message needs my approval before it goes out, and the paid lookups are still being tested.')],
+        stack=['Python', 'Streamlit', 'Node.js', 'Apify', 'Claude Haiku', 'Structured JSON outputs', 'GitHub API (private data repo)', 'SmartProspect', 'MillionVerifier'],
+        status=('Live; outreach step in testing', 'part'),
+        proof='In the first test on 138 saved roles, reading the full post instead of the title moved 26 of them by 25 points or more, and surfaced what a title cannot show: a required language, a required degree, a domain I have not worked in. A daily cap on searches and a running count of tokens and scraping spend keep the cost visible.',
+    ),
 ]
 BY_ID = {p['id']: p for p in PRODUCTS}
+MAIN = [p for p in PRODUCTS if not p.get('bonus')]   # the seven lead-to-meeting products; the rest are bonus projects
 PAINS = [('Hard to find the right leads', 'icp', 'ICP engine: a self-built alternative to Clay'),
          ('Leads wait and go cold', 'daniel', 'Daniel: instant intake'),
          ('Follow-up stops after one attempt', 'cycle', 'An outreach sequence that stops on reply'),
@@ -257,13 +276,24 @@ def home():
             c2.button('Open this product', key=f'pain_open_{pid}', type='primary', on_click=go, args=(pid,), width='stretch')
 
     st.subheader('The seven products')
-    for row in range(0, len(PRODUCTS), 3):
+    for row in range(0, len(MAIN), 3):
         cols = st.columns(3)
-        for col, (n, p) in zip(cols, list(enumerate(PRODUCTS))[row:row + 3]):
+        for col, (n, p) in zip(cols, list(enumerate(MAIN))[row:row + 3]):
             with col.container(border=True):
-                st.markdown(f'<div class="rank">{n + 1} of 7</div><div class="card-title">{esc(p["title"])}</div>'
+                st.markdown(f'<div class="rank">{n + 1} of {len(MAIN)}</div><div class="card-title">{esc(p["title"])}</div>'
                             f'<div class="card-text">{esc(p["result"])}</div>{badge(p["status"])}', unsafe_allow_html=True)
                 st.button('Explore →', key=f'open_{p["id"]}', on_click=go, args=(p['id'],), width='stretch')
+
+    bonus = [p for p in PRODUCTS if p.get('bonus')]
+    if bonus:
+        st.subheader('Beyond lead to meeting')
+        st.caption('The same way of building, pointed at my own job search.')
+        for p in bonus:
+            with st.container(border=True):
+                c1, c2 = st.columns([4, 1], vertical_alignment='center')
+                c1.markdown(f'<div class="rank">Bonus project</div><div class="card-title">{esc(p["title"])}</div>'
+                            f'<div class="card-text" style="min-height:0">{esc(p["result"])}</div>{badge(p["status"])}', unsafe_allow_html=True)
+                c2.button('Explore →', key=f'open_{p["id"]}', on_click=go, args=(p['id'],), width='stretch')
 
     st.markdown('<div class="footer">Assaf Blitz · Tel Aviv · All products were designed and built with Claude Code.</div>', unsafe_allow_html=True)
 
@@ -413,7 +443,86 @@ def try_proxy():
     st.markdown('<p class="note">Bar lengths illustrate the idea, not exact prices. The measured result: about 5.2× lower cost on one sample 4-turn conversation.</p>', unsafe_allow_html=True)
 
 
-TRY = {'icp': try_icp, 'scorers': try_scorers, 'cycle': try_cycle, 'daniel': try_daniel, 'meeting': try_meeting, 'crm': try_crm, 'proxy': try_proxy}
+JOB_GATES = ['Title rule', 'Excluded industry', 'Location rule', 'Seen before?', 'Two reviews', 'Verdict']
+JOB_SAMPLES = [
+    dict(name='Marketing Automation Manager · Tel Aviv', a=82, b=78,
+         note='It passes every free rule.'),
+    dict(name='Senior Backend Engineer · Tel Aviv', stop=0,
+         note='Engineering titles are removed by a title rule, before any paid call.'),
+    dict(name='Head of Product · Example Security Ltd', stop=1,
+         note='The employer is in an excluded industry (a list I maintain), so it never reaches a review.'),
+    dict(name='Product Manager · Barcelona, hybrid', stop=2,
+         note='Outside Israel, a role is shown only if it is fully remote and written in English. This one is hybrid.'),
+    dict(name='Marketing Automation Manager · Tel Aviv (posted again)', stop=3,
+         note='Same company and title as a role I already applied to, so the re-posted ad does not come back.'),
+    dict(name='AI Product Manager · Remote, Europe', a=66, b=52, third=58,
+         note='"Remote, Europe" does not prove that someone based in Israel can be hired, so the two reviews read it differently.'),
+    dict(name='Sales Development Rep · Haifa', a=33, b=29,
+         note='It passes the free rules, but the match is low. A role under 40 is archived and never shown.'),
+]
+VERDICT_STYLE = {'Apply now': (OK_SOFT, OK), 'Apply': (ACCENT_SOFT, ACCENT), 'Maybe': (PART_SOFT, PART), 'Skip': (BAD_SOFT, BAD)}
+
+
+def job_verdict(score, hard=False):
+    if hard or score < 40:
+        return 'Skip'
+    return 'Apply now' if score >= 80 else 'Apply' if score >= 60 else 'Maybe'
+
+
+def verdict_html(v):
+    bg, fg = VERDICT_STYLE[v]
+    return f'<span class="band" style="background:{bg};color:{fg};margin:0;vertical-align:baseline">{v}</span>'
+
+
+def try_jobs():
+    st.markdown('Pick a made-up role to see where the rules stop it, or what the reviews decide. These are illustrations, not real postings.')
+    pick = st.selectbox('A role to follow', [s['name'] for s in JOB_SAMPLES], key='jb_pick')
+    s = next(x for x in JOB_SAMPLES if x['name'] == pick)
+    steps = [(g, '') for g in JOB_GATES]
+    if 'stop' in s:
+        k = s['stop']
+        states = {i: 'done' for i in range(k)}
+        states[k] = 'stop'
+        states.update({i: 'skip' for i in range(k + 1, len(JOB_GATES))})
+        calls = 0
+        result = f'<b>Stopped at: {esc(JOB_GATES[k])}.</b> {esc(s["note"])}'
+    else:
+        gap = abs(s['a'] - s['b'])
+        final = s['third'] if gap > 10 else round((s['a'] + s['b']) / 2)
+        verdict = job_verdict(final)
+        states = {i: 'done' for i in range(len(JOB_GATES))}
+        if verdict == 'Skip':
+            states[5] = 'stop'
+        calls = 3 if gap > 10 else 2
+        how = (f'Review A gave {s["a"]} and review B gave {s["b"]}. ' +
+               (f'They differ by {gap} points, so a third review decides: {final}.' if gap > 10
+                else f'They are within 10 points, so the match is their average: {final}.'))
+        result = f'{esc(s["note"])}<br>{how} <b>Match {final}</b> {verdict_html(verdict)}'
+    st.markdown(flow_html(steps, states=states), unsafe_allow_html=True)
+    st.markdown(f'<div class="detail">{result}<div class="rule">Paid Claude calls for this role: <b>{calls}</b></div></div>', unsafe_allow_html=True)
+
+    st.divider()
+    st.markdown('<div class="h3">Two reviews, one decision</div>', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    a = c1.slider('Review A: match', 0, 100, 66, key='jb_a')
+    b = c2.slider('Review B: match', 0, 100, 52, key='jb_b')
+    gap = abs(a - b)
+    if gap > 10:
+        base = st.slider('Third review: it decides, no averaging', 0, 100, 58, key='jb_c')
+        how = f'The reviews differ by {gap} points, more than 10, so a third review decides.'
+    else:
+        base = round((a + b) / 2)
+        how = f'The reviews differ by {gap} points, 10 or less, so the match is their average.'
+    hard = st.toggle('The post proves a hard eligibility conflict (for example, must live in the US)', key='jb_hard')
+    final = min(base, 25) if hard else base
+    verdict = job_verdict(final, hard)
+    extra = (' A hard conflict caps the match at 25.' if hard else '') + (' A role under 40 is archived and never shown.' if final < 40 else '')
+    st.markdown(f'<div class="detail">{esc(how)}{esc(extra)}<br><b>Match {final}</b> {verdict_html(verdict)}</div>', unsafe_allow_html=True)
+    st.markdown('<p class="note">Apply now: 80 and up · Apply: 60 to 79 · Maybe: 40 to 59 · Skip: under 40, or a hard conflict.</p>', unsafe_allow_html=True)
+
+
+TRY = {'icp': try_icp, 'scorers': try_scorers, 'cycle': try_cycle, 'daniel': try_daniel, 'meeting': try_meeting, 'crm': try_crm, 'proxy': try_proxy,
+       'jobs': try_jobs}
 
 
 # ---------- product page ----------
@@ -426,7 +535,8 @@ def product(pid):
     nav[2].button('← Previous', on_click=go, args=(PRODUCTS[i - 1]['id'],), key='prev', disabled=i == 0, width='stretch')
     nav[3].button('Next →', on_click=go, args=(PRODUCTS[(i + 1) % len(PRODUCTS)]['id'],), key='next', disabled=i == len(PRODUCTS) - 1, width='stretch')
 
-    st.markdown(f'<div class="rank">{i + 1} of 7</div><h1 style="font-size:clamp(26px,4vw,38px);font-weight:800;margin:4px 0 6px">{esc(p["title"])}</h1>'
+    rank = 'Bonus project' if p.get('bonus') else f'{i + 1} of {len(MAIN)}'
+    st.markdown(f'<div class="rank">{rank}</div><h1 style="font-size:clamp(26px,4vw,38px);font-weight:800;margin:4px 0 6px">{esc(p["title"])}</h1>'
                 f'<p class="lead">{esc(p["result"])}</p>{badge(p["status"])}', unsafe_allow_html=True)
 
     tab_how, tab_try, tab_why, tab_stack = st.tabs(['How it works', 'Try it', 'Problem & solution', 'Stack & proof'])
