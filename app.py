@@ -1,4 +1,4 @@
-"""Assaf Blitz: interactive portfolio. Seven AI products, from lead to meeting.
+"""Assaf Blitz: interactive portfolio. AI agents Development with Product Management Mindset: eight systems, the job engine included.
 
 Same facts as Assaf-Blitz-Portfolio-EN.html; every number there is a measured pilot number. The "Try it" panels are
 illustrations of each product's rules, computed in this page, not calls to the real systems.
@@ -183,7 +183,7 @@ PRODUCTS = [
         proof='About 5.2× lower cost on a sample 4-turn conversation. This measures one conversation, not an average across all traffic.',
     ),
     dict(
-        id='jobs', bonus=True, nav='Job engine', title='Job engine: finding and judging the right roles',
+        id='jobs', nav='Job engine', title='Job engine: finding and judging the right roles',
         result='One keyword searches the Israeli job boards and over 200 company career pages. Every role is read in full, matched to the profile and ranked, so the day starts with a short list instead of a hundred tabs.',
         problem='Job boards repeat the same roles, and the real requirements sit in the text, not the title. A keyword search lets engineering roles in disguise through, and checking many sites by hand takes hours every day.',
         solution='One keyword is sent to LinkedIn, Drushim, AllJobs, JobMaster and over 200 company career pages. Free rules remove what cannot fit before any paid call. Each remaining role is read in full by two independent Claude reviews, with a third when they disagree. The result is a 0 to 100 match, an eligibility check, a verdict and the CV to attach. The final click on every application is mine.',
@@ -202,13 +202,13 @@ PRODUCTS = [
     ),
 ]
 BY_ID = {p['id']: p for p in PRODUCTS}
-MAIN = [p for p in PRODUCTS if not p.get('bonus')]   # the seven lead-to-meeting products; the rest are bonus projects
 PAINS = [('Hard to find the right leads', 'icp', 'ICP engine: a self-built alternative to Clay'),
          ('Leads wait and go cold', 'daniel', 'Daniel: instant intake'),
          ('Follow-up stops after one attempt', 'cycle', 'An outreach sequence that stops on reply'),
          ('No clear way to tell a good lead', 'scorers', 'Enrichment, score and explanation'),
          ('Meetings that don\'t happen', 'meeting', 'The meeting lifecycle'),
-         ('Handoffs without context', 'crm', 'History, CRM and handoff to a person')]
+         ('Handoffs without context', 'crm', 'History, CRM and handoff to a person'),
+         ('Too many job posts, too few that fit', 'jobs', 'Job engine: every role read in full, ranked')]
 
 
 # ---------- navigation (also kept in the URL, so a product can be linked directly) ----------
@@ -249,7 +249,7 @@ def home():
     st.markdown("""
 <div class="hero">
   <div class="eyebrow">ASSAF BLITZ · PRODUCT MANAGER &amp; AI BUILDER</div>
-  <h1>Seven AI products, from lead to meeting</h1>
+  <h1>AI agents Development with Product Management Mindset</h1>
   <p class="lead">Systems I defined and built with Claude Code. Each product solves one business problem, with a clear process and a documented stack. Tap any product to see how it works, and try its rules yourself.</p>
 </div>""", unsafe_allow_html=True)
     st.link_button('LinkedIn profile', 'https://www.linkedin.com/in/ablitz', icon=':material/open_in_new:')
@@ -265,7 +265,7 @@ def home():
 """, unsafe_allow_html=True)
 
     st.subheader('Start from the pain')
-    st.caption('Clients in real estate and lending had leads, and the leads weren\'t closing. Pick a pain to see what was built for it.')
+    st.caption('Clients in real estate and lending had leads, and the leads weren\'t closing. My own job search hit the same wall: too much to read, no clear way to choose. Pick a pain to see what was built for it.')
     picked = st.pills('Pain', [p[0] for p in PAINS], key='pain', label_visibility='collapsed')
     if picked:
         _, pid, sol = next(p for p in PAINS if p[0] == picked)
@@ -275,25 +275,14 @@ def home():
                         f'<div class="card-text" style="min-height:0;margin-top:4px">{esc(BY_ID[pid]["result"])}</div>', unsafe_allow_html=True)
             c2.button('Open this product', key=f'pain_open_{pid}', type='primary', on_click=go, args=(pid,), width='stretch')
 
-    st.subheader('The seven products')
-    for row in range(0, len(MAIN), 3):
+    st.subheader('The eight products')
+    for row in range(0, len(PRODUCTS), 3):
         cols = st.columns(3)
-        for col, (n, p) in zip(cols, list(enumerate(MAIN))[row:row + 3]):
+        for col, (n, p) in zip(cols, list(enumerate(PRODUCTS))[row:row + 3]):
             with col.container(border=True):
-                st.markdown(f'<div class="rank">{n + 1} of {len(MAIN)}</div><div class="card-title">{esc(p["title"])}</div>'
+                st.markdown(f'<div class="rank">{n + 1} of {len(PRODUCTS)}</div><div class="card-title">{esc(p["title"])}</div>'
                             f'<div class="card-text">{esc(p["result"])}</div>{badge(p["status"])}', unsafe_allow_html=True)
                 st.button('Explore →', key=f'open_{p["id"]}', on_click=go, args=(p['id'],), width='stretch')
-
-    bonus = [p for p in PRODUCTS if p.get('bonus')]
-    if bonus:
-        st.subheader('Beyond lead to meeting')
-        st.caption('The same way of building, pointed at my own job search.')
-        for p in bonus:
-            with st.container(border=True):
-                c1, c2 = st.columns([4, 1], vertical_alignment='center')
-                c1.markdown(f'<div class="rank">Bonus project</div><div class="card-title">{esc(p["title"])}</div>'
-                            f'<div class="card-text" style="min-height:0">{esc(p["result"])}</div>{badge(p["status"])}', unsafe_allow_html=True)
-                c2.button('Explore →', key=f'open_{p["id"]}', on_click=go, args=(p['id'],), width='stretch')
 
     st.markdown('<div class="footer">Assaf Blitz · Tel Aviv · All products were designed and built with Claude Code.</div>', unsafe_allow_html=True)
 
@@ -535,7 +524,7 @@ def product(pid):
     nav[2].button('← Previous', on_click=go, args=(PRODUCTS[i - 1]['id'],), key='prev', disabled=i == 0, width='stretch')
     nav[3].button('Next →', on_click=go, args=(PRODUCTS[(i + 1) % len(PRODUCTS)]['id'],), key='next', disabled=i == len(PRODUCTS) - 1, width='stretch')
 
-    rank = 'Bonus project' if p.get('bonus') else f'{i + 1} of {len(MAIN)}'
+    rank = f'{i + 1} of {len(PRODUCTS)}'
     st.markdown(f'<div class="rank">{rank}</div><h1 style="font-size:clamp(26px,4vw,38px);font-weight:800;margin:4px 0 6px">{esc(p["title"])}</h1>'
                 f'<p class="lead">{esc(p["result"])}</p>{badge(p["status"])}', unsafe_allow_html=True)
 
