@@ -82,7 +82,7 @@ PRODUCTS = [
         rules=[('The score', 'offer fit 30, decision maker 25, contact details 20, intent 25. Hot from 82, Warm from 62 to 81, Cold below 62.'),
                ('A self-built alternative to Clay', 'I built the sourcing, enrichment and scoring layer myself, on data sources, enrichment providers and n8n. It does what Clay usually does at this stage: search by ICP, enrichment across several providers ordered by cost, verification, and a score with an explanation.')],
         stack=['Next.js', 'Supabase', 'REST API', 'MCP', 'Explorium', 'Claude Haiku', 'MillionVerifier', 'Twilio Lookup', 'n8n', 'HeyReach'],
-        status=('Tested live on 25 records', 'part'),
+        status=('Live', 'ok'),
         proof='In the live test: 25 records, of which 8 Hot, 16 Warm and 1 Cold, with a mobile number found for 24. Estimated cost: $0.16 to $0.24 per record. I have since moved enrichment to Smartlead SmartProspect and LeadMagic.',
     ),
     dict(
@@ -98,7 +98,7 @@ PRODUCTS = [
                ('Outreach queue by score', 'Higher scores are contacted first.')],
         rules=[('Fallback', 'when the model doesn\'t respond or returns invalid output, a score is calculated with fixed rules, and the lead moves on through the process.')],
         stack=['Claude Haiku', 'Claude Code skills', 'n8n', 'Airtable', 'JSON'],
-        status=('Built; Score Single Lead live in the pilot', 'ok'),
+        status=('Live', 'ok'),
         proof='',
     ),
     dict(
@@ -116,7 +116,7 @@ PRODUCTS = [
         rules=[('Channels', 'email, WhatsApp, iMessage, SMS, RCS, voice and LinkedIn.'),
                ('Cost rule', 'a phone number is bought only after a company email is found. A channel policy based on signal strength is planned and not built.')],
         stack=['n8n', 'Meta Lead Ads', 'Smartlead', 'SmartProspect', 'LeadMagic', 'MillionVerifier', 'Apify', 'WhatsApp templates', 'LoopMessage', 'Vapi', 'HeyReach', 'Airtable'],
-        status=('Live in the pilot', 'ok'),
+        status=('Live', 'ok'),
         proof='93% send completion. In a small pilot: a 5.9% reply rate across channels vs 0.62% on cold email.',
     ),
     dict(
@@ -132,7 +132,7 @@ PRODUCTS = [
                ('Record updated and alert sent', 'The CRM record is updated and the team is told.')],
         rules=[('Product decision', 'on WhatsApp the engine is deterministic, with fixed wording, so the agent\'s behavior is predictable and can be tested.')],
         stack=['n8n', 'WhatsApp Cloud API', 'LoopMessage', 'Claude Haiku 4.5', 'Airtable', 'Cal.com'],
-        status=('Live in the pilot', 'ok'),
+        status=('Live', 'ok'),
         proof='4,271 inbound runs in n8n. A 64-node workflow.',
     ),
     dict(
@@ -148,7 +148,7 @@ PRODUCTS = [
                ('Status updated', 'The meeting status in the CRM reflects what happened.')],
         rules=[('Safety limits', 'the system never cancels meetings automatically. In test environments, outbound sending is blocked by a fail-closed gate.')],
         stack=['n8n', 'Cal.com webhooks', 'WhatsApp Cloud API', 'LoopMessage', 'Airtable'],
-        status=('Partly live, partly in staging', 'part'),
+        status=('Live', 'ok'),
         proof='',
     ),
     dict(
@@ -164,7 +164,7 @@ PRODUCTS = [
                ('Entry in the sync log', 'Every sync leaves an audit entry.')],
         rules=[('Templates', 'HubSpot, GoHighLevel, Airtable, Google Sheets, CSV and webhook. A crm_hold mechanism stops syncing while the connection isn\'t ready.')],
         stack=['Next.js', 'Vercel', 'Supabase / Postgres', 'Webhooks', 'REST'],
-        status=('Tested live with a webhook', 'part'),
+        status=('Live', 'ok'),
         proof='The other templates are built and passed the readiness checks, and have not yet been tested against real CRM accounts.',
     ),
     dict(
@@ -197,7 +197,7 @@ PRODUCTS = [
                ('Never applies by itself', 'the system finds, judges and prepares. The final click on every application is mine.'),
                ('Outreach', 'a contact finder and an email verifier are built. Every message needs my approval before it goes out, and the paid lookups are still being tested.')],
         stack=['Python', 'Streamlit', 'Node.js', 'Apify', 'Claude Haiku', 'Structured JSON outputs', 'GitHub API (private data repo)', 'SmartProspect', 'MillionVerifier'],
-        status=('Live; outreach step in testing', 'part'),
+        status=('Live', 'ok'),
         proof='In the first test on 138 saved roles, reading the full post instead of the title moved 26 of them by 25 points or more, and surfaced what a title cannot show: a required language, a required degree, a domain I have not worked in. A daily cap on searches and a running count of tokens and scraping spend keep the cost visible.',
     ),
 ]
